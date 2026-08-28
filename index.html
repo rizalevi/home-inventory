@@ -140,76 +140,130 @@ async function openScanner() {
     scanStatus.classList.add('hidden');
     reader.innerHTML = '';
 
-    if (!window.isSecureContext) {
-        scanStatus.classList.remove('hidden');
-        scanStatus.textContent =
-            '❌ Scanner harus dibuka melalui HTTPS.';
-        return;
-    }
-
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
-
-        scanStatus.classList.remove('hidden');
-        scanStatus.textContent =
-            '❌ Browser tidak mendukung kamera.';
-        return;
-    }
-
     try {
 
-        // Test permission kamera terlebih dahulu
-        const stream =
-            await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: {
-                        ideal: 'environment'
-                    }
-                }
-            });
+        console.log('=== OPEN SCANNER ===');
 
-        stream.getTracks().forEach(track => track.stop());
+        // ==============================
+        // CHECK HTTPS
+        // ==============================
+
+        if (location.protocol !== 'https:') {
+            throw new Error(
+                'Website harus menggunakan HTTPS.'
+            );
+        }
+
+        console.log(
+            'HTTPS:',
+            location.href
+        );
+
+        // ==============================
+        // LOAD HTML5 QR CODE
+        // ==============================
 
         await loadScannerLibrary();
 
+        console.log(
+            'Html5Qrcode:',
+            typeof Html5Qrcode
+        );
+
+        if (typeof Html5Qrcode === 'undefined') {
+            throw new Error(
+                'Library html5-qrcode tidak berhasil dimuat.'
+            );
+        }
+
+        // ==============================
+        // CREATE SCANNER
+        // ==============================
+
         scanner = new Html5Qrcode('reader');
 
-        const formats = [
+        // ==============================
+        // GET CAMERA LIST
+        // ==============================
 
-            // QR
-            Html5QrcodeSupportedFormats.QR_CODE,
+        console.log(
+            'Mencari kamera...'
+        );
 
-            // Barcode produk
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
+        const cameras =
+            await Html5Qrcode.getCameras();
 
-            // UPC
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
+        console.log(
+            'CAMERAS:',
+            cameras
+        );
 
-            // Code
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.CODE_93,
+        if (!cameras || cameras.length === 0) {
 
-            // ITF
-            Html5QrcodeSupportedFormats.ITF,
+            throw new Error(
+                'Tidak ada kamera yang terdeteksi oleh browser.'
+            );
+        }
 
-            // Codabar
-            Html5QrcodeSupportedFormats.CODABAR
-        ];
+        // ==============================
+        // CARI KAMERA BELAKANG
+        // ==============================
+
+        let cameraId = cameras[0].id;
+
+        for (const camera of cameras) {
+
+            const label =
+                String(camera.label || '').toLowerCase();
+
+            console.log(
+                'Camera:',
+                camera.id,
+                camera.label
+            );
+
+            if (
+                label.includes('back') ||
+                label.includes('rear') ||
+                label.includes('environment') ||
+                label.includes('belakang')
+            ) {
+
+                cameraId = camera.id;
+
+                break;
+            }
+        }
+
+        console.log(
+            'CAMERA DIPILIH:',
+            cameraId
+        );
+
+        // ==============================
+        // SCANNER CONFIG
+        // ==============================
 
         const config = {
 
-            fps: 15,
+            fps: 10,
 
-            qrbox: function(viewfinderWidth, viewfinderHeight) {
+            qrbox: function(
+                viewfinderWidth,
+                viewfinderHeight
+            ) {
 
                 const width =
-                    Math.min(viewfinderWidth * 0.85, 420);
+                    Math.min(
+                        viewfinderWidth * 0.85,
+                        400
+                    );
 
                 const height =
-                    Math.min(viewfinderHeight * 0.35, 180);
+                    Math.min(
+                        viewfinderHeight * 0.35,
+                        180
+                    );
 
                 return {
                     width: width,
@@ -217,93 +271,206 @@ async function openScanner() {
                 };
             },
 
-            formatsToSupport: formats,
+            rememberLastUsedCamera: true
 
-            rememberLastUsedCamera: true,
-
-            experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true
-            }
         };
+
+        // ==============================
+        // START CAMERA
+        // ==============================
+
+        console.log(
+            'START CAMERA...'
+        );
 
         await scanner.start(
 
-            {
-                facingMode: {
-                    ideal: 'environment'
-                }
-            },
+            cameraId,
 
             config,
 
-            function(decodedText, decodedResult) {
+            function(
+                decodedText,
+                decodedResult
+            ) {
 
                 console.log(
-                    'SCAN BERHASIL:',
-                    decodedText,
+                    '================================'
+                );
+
+                console.log(
+                    'SCAN BERHASIL'
+                );
+
+                console.log(
+                    'CODE:',
+                    decodedText
+                );
+
+                console.log(
+                    'RESULT:',
                     decodedResult
                 );
 
+                console.log(
+                    '================================'
+                );
+
                 handleBarcode(decodedText);
+
             },
 
             function(errorMessage) {
 
-                // Jangan tampilkan error ke user.
-                // Scanner memang terus melakukan percobaan.
+                // Normal.
+                // Scanner sedang mencari barcode.
+
             }
+
         );
 
-    } catch (e) {
+        console.log(
+            'CAMERA STARTED'
+        );
 
-        console.error('CAMERA ERROR:', e);
+        scanStatus.classList.add('hidden');
+
+    }
+    catch (error) {
+
+        console.error(
+            '================================'
+        );
+
+        console.error(
+            'CAMERA ERROR'
+        );
+
+        console.error(
+            'RAW ERROR:',
+            error
+        );
+
+        console.error(
+            'TYPE:',
+            typeof error
+        );
+
+        console.error(
+            'NAME:',
+            error && error.name
+        );
+
+        console.error(
+            'MESSAGE:',
+            error && error.message
+        );
+
+        console.error(
+            'STACK:',
+            error && error.stack
+        );
+
+        console.error(
+            '================================'
+        );
+
+        let message;
+
+        if (error instanceof Error) {
+
+            message =
+                error.name +
+                ': ' +
+                error.message;
+
+        }
+        else if (typeof error === 'string') {
+
+            message = error;
+
+        }
+        else if (error) {
+
+            try {
+
+                message =
+                    JSON.stringify(error);
+
+            }
+            catch (_) {
+
+                message =
+                    String(error);
+            }
+
+        }
+        else {
+
+            message =
+                'Browser menolak atau gagal membuka kamera.';
+        }
 
         scanStatus.classList.remove('hidden');
 
         scanStatus.textContent =
             '❌ Kamera gagal: ' +
-            e.name +
-            ' - ' +
-            e.message;
+            message;
     }
 }
+    
 function loadScannerLibrary() {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(function(resolve, reject) {
 
         if (
-            window.Html5Qrcode &&
-            window.Html5QrcodeSupportedFormats
+            typeof Html5Qrcode !== 'undefined'
         ) {
+
             resolve();
+
             return;
         }
 
-        const script = document.createElement('script');
+        const script =
+            document.createElement('script');
 
         script.src =
             'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
 
-        script.onload = () => {
+        script.onload = function() {
+
+            console.log(
+                'html5-qrcode loaded'
+            );
 
             if (
-                window.Html5Qrcode &&
-                window.Html5QrcodeSupportedFormats
+                typeof Html5Qrcode !== 'undefined'
             ) {
+
                 resolve();
-            } else {
+
+            }
+            else {
+
                 reject(
                     new Error(
-                        'Library html5-qrcode tidak lengkap.'
+                        'Html5Qrcode tidak ditemukan setelah library dimuat.'
                     )
                 );
             }
         };
 
-        script.onerror = () => {
+        script.onerror = function(error) {
+
+            console.error(
+                'Gagal load html5-qrcode:',
+                error
+            );
+
             reject(
                 new Error(
-                    'Gagal memuat html5-qrcode.'
+                    'Gagal memuat library html5-qrcode.'
                 )
             );
         };
