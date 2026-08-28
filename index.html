@@ -77,112 +77,6 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
 .search-wrap{position:relative}.search-wrap input{padding-left:40px}.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#9ca3af}
 @media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}.content{padding:20px}.actions{grid-template-columns:1fr 1fr}.app{background:var(--bg)}}
 </style>
-
-<style>
-.section-title{
-  font-size:15px;
-  font-weight:800;
-  margin-bottom:8px;
-}
-
-.stock-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:14px;
-}
-
-.stock-action{
-  border:0;
-  border-radius:16px;
-  min-height:76px;
-  padding:12px 10px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  text-align:left;
-  cursor:pointer;
-  transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
-}
-
-.stock-action:active{
-  transform:scale(.97);
-}
-
-.stock-action-icon{
-  width:38px;
-  height:38px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:25px;
-  font-weight:800;
-  flex:0 0 38px;
-}
-
-.stock-action b{
-  display:block;
-  font-size:14px;
-  line-height:18px;
-}
-
-.stock-action small{
-  display:block;
-  margin-top:2px;
-  font-size:11px;
-  opacity:.72;
-}
-
-.stock-in{
-  background:#eafaf1;
-  color:#157347;
-  box-shadow:0 5px 16px rgba(21,115,71,.10);
-}
-
-.stock-in .stock-action-icon{
-  background:#d4f4e3;
-}
-
-.stock-out{
-  background:#fff0f0;
-  color:#c62828;
-  box-shadow:0 5px 16px rgba(198,40,40,.10);
-}
-
-.stock-out .stock-action-icon{
-  background:#ffdada;
-}
-
-@media (max-width:520px){
-  .stock-actions{
-    gap:8px;
-  }
-
-  .stock-action{
-    min-height:72px;
-    padding:10px 8px;
-    gap:7px;
-  }
-
-  .stock-action-icon{
-    width:34px;
-    height:34px;
-    flex-basis:34px;
-    font-size:22px;
-  }
-
-  .stock-action b{
-    font-size:13px;
-  }
-
-  .stock-action small{
-    font-size:10px;
-  }
-}
-</style>
-
 </head>
 <body>
 <div class="app">
@@ -280,46 +174,25 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
 </div></div>
 
 <div id="itemModal" class="modal hidden"><div class="modalbox">
-<div class="row">
-  <div>
-    <h3 id="itemModalTitle" style="margin:0">＋ Tambah Barang</h3>
-    <div id="itemModalSubtitle" class="muted" style="margin-top:4px">Data barang baru</div>
-  </div>
-  <button class="secondary" onclick="closeItemModal()">Tutup</button>
-</div>
-
-<div id="editInfo" class="scan-help hidden" style="margin-top:12px"></div>
-
+<div class="row"><h3 style="margin:0">＋ Tambah Barang</h3><button class="secondary" onclick="closeItemModal()">Tutup</button></div>
 <label>Barcode *</label><input id="fBarcode" placeholder="Barcode">
 <label>Nama Barang *</label><input id="fName" placeholder="Contoh: Susu Ultra Milk">
 <label>Kategori</label><select id="fCategory"></select>
 <label>Satuan</label><select id="fUnit"><option>pcs</option><option>pack</option><option>botol</option><option>kaleng</option><option>box</option><option>kg</option><option>gram</option><option>liter</option><option>lainnya</option></select>
 <label>Lokasi</label><select id="fLocation"></select>
-<label>Stock</label><input id="fStock" type="number" min="0" value="0">
+<label>Stock Awal</label><input id="fStock" type="number" min="0" value="0">
 <label>Minimum Stock</label><input id="fMinStock" type="number" min="0" value="1">
 <label>Expired Date</label><input id="fExpired" type="date">
 <label>Catatan</label><input id="fNote" placeholder="Opsional">
+<button class="big" style="margin-top:16px" onclick="saveNewItem()">💾 Simpan Barang</button>
+</div></div>
 
-<button id="saveItemButton" class="big" style="margin-top:16px" onclick="saveItemForm()">💾 Simpan Barang</button>
-
-<div id="stockAdjustSection" class="hidden" style="margin-top:22px">
-  <div class="section-title">📦 Pergerakan Stock</div>
-  <div id="stockCurrentInfo" class="scan-help"></div>
-
-  <label>Jumlah</label><input id="stockQty" type="number" min="1" value="1">
-  <label>Catatan Transaksi</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
-
-  <div class="stock-actions">
-    <button class="stock-action stock-in" onclick="submitStock('IN')">
-      <span class="stock-action-icon">＋</span>
-      <span><b>Stock Masuk</b><small>Tambah persediaan</small></span>
-    </button>
-    <button class="stock-action stock-out" onclick="submitStock('OUT')">
-      <span class="stock-action-icon">−</span>
-      <span><b>Stock Keluar</b><small>Kurangi persediaan</small></span>
-    </button>
-  </div>
-</div>
+<div id="stockModal" class="modal hidden"><div class="modalbox">
+<div class="row"><h3 id="stockTitle" style="margin:0">Stock</h3><button class="secondary" onclick="closeStockModal()">Tutup</button></div>
+<div id="stockInfo" class="scan-help"></div>
+<label>Jumlah</label><input id="stockQty" type="number" min="1" value="1">
+<label>Catatan</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
+<div class="actions" style="margin-top:15px"><button class="success" onclick="submitStock('IN')">＋ STOCK MASUK</button><button class="danger" onclick="submitStock('OUT')">－ STOCK KELUAR</button></div>
 </div></div>
 <div id="toast" class="toast"></div>
 
@@ -378,7 +251,7 @@ async function refreshDashboard(){
 }
 function card(i){
   const low=+i.stock<=+i.minStock&&+i.minStock>0;
-  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+  return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
     <div class="item-main">
       <div class="name">${esc(i.name)}</div>
       <div class="item-meta"><span class="badge">📍 ${esc(i.location)}</span><span class="badge">${esc(i.category)}</span></div>
@@ -394,7 +267,7 @@ function expiryCard(i){
   else if(days<=3){cls='expired-danger';text=`${days} hari lagi`;}
   else if(days<=7){cls='expired-warning';text=`${days} hari lagi`;}
   else {cls='expired-ok';text=`${days} hari lagi`;}
-  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+  return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
     <div class="item-main">
       <div class="name">${esc(i.name)}</div>
       <div class="item-meta"><span class="badge">📅 ${formatDateID(i.expiredDate)}</span><span class="badge">📍 ${esc(i.location)}</span></div>
@@ -816,7 +689,7 @@ async function handleBarcode(code) {
 
             console.log('Barang ditemukan:', result.item);
 
-            openEditItem(result.item);
+            openStockModal(result.item);
 
             return;
         }
@@ -847,205 +720,20 @@ async function handleBarcode(code) {
 }
 function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(b.trim())}
 
-let itemEditMode = false;
-
-function setSelectValue(selectEl, value) {
-  const v = String(value ?? '');
-  const exists = Array.from(selectEl.options).some(o => o.value === v);
-  if (exists) {
-    selectEl.value = v;
-  } else if (v) {
-    const opt = document.createElement('option');
-    opt.value = v;
-    opt.textContent = v;
-    selectEl.appendChild(opt);
-    selectEl.value = v;
-  }
+function openAddItem(barcode=''){fBarcode.value=barcode;fName.value='';fStock.value=0;fMinStock.value=1;fExpired.value='';fNote.value='';itemModal.classList.remove('hidden')}
+function closeItemModal(){itemModal.classList.add('hidden')}
+async function saveNewItem(){
+ const data={barcode:fBarcode.value,name:fName.value,category:fCategory.value,unit:fUnit.value,location:fLocation.value,stock:fStock.value,minStock:fMinStock.value,expiredDate:fExpired.value,note:fNote.value};
+ if(!data.barcode.trim()||!data.name.trim())return showToast('Barcode dan nama wajib diisi.');
+ try{const r=await apiPost('item',data);closeItemModal();showToast('Barang berhasil disimpan.');await refreshDashboard();await loadItems();openStockModal(r.item)}catch(e){showError(e)}
 }
+function openStockModal(item){selectedItem=item;stockTitle.textContent=item.name;stockInfo.innerHTML=`<b>Stock: ${item.stock} ${esc(item.unit)}</b><br>Barcode: ${esc(item.barcode)}<br>Lokasi: ${esc(item.location)}`;stockQty.value=1;stockNote.value='';stockModal.classList.remove('hidden')}
+function closeStockModal(){stockModal.classList.add('hidden');selectedItem=null}
+async function submitStock(type){if(!selectedItem)return;const qty=+stockQty.value;if(!qty||qty<=0)return showToast('Qty harus lebih dari 0.');try{const r=await apiPost('stock',{barcode:selectedItem.barcode,type,qty,note:stockNote.value});closeStockModal();showToast(type==='IN'?'Stock masuk berhasil.':'Stock keluar berhasil.');await refreshDashboard();await loadItems()}catch(e){showError(e)}}
 
-function formatEditInfo(item) {
-  return `<b>📦 ${esc(item.name)}</b><br>
-          Barcode: ${esc(item.barcode)}<br>
-          Stock saat ini: <b>${esc(item.stock)} ${esc(item.unit)}</b>`;
-}
-
-function openAddItem(barcode='') {
-  itemEditMode = false;
-  selectedItem = null;
-
-  itemModalTitle.textContent = '＋ Tambah Barang';
-  itemModalSubtitle.textContent = 'Data barang baru';
-  saveItemButton.textContent = '💾 Simpan Barang';
-
-  editInfo.classList.add('hidden');
-  stockAdjustSection.classList.add('hidden');
-
-  fBarcode.value = barcode || '';
-  fName.value = '';
-  fStock.value = 0;
-  fMinStock.value = 1;
-  fExpired.value = '';
-  fNote.value = '';
-
-  if (master.categories.length) setSelectValue(fCategory, master.categories[0]);
-  if (master.locations.length) setSelectValue(fLocation, master.locations[0]);
-  setSelectValue(fUnit, 'pcs');
-
-  itemModal.classList.remove('hidden');
-}
-
-function openEditItem(item) {
-  if (!item) return;
-
-  itemEditMode = true;
-  selectedItem = item;
-
-  itemModalTitle.textContent = '✏️ Edit Barang';
-  itemModalSubtitle.textContent = 'Ubah informasi barang';
-  saveItemButton.textContent = '💾 Simpan Perubahan';
-
-  editInfo.innerHTML = formatEditInfo(item);
-  editInfo.classList.remove('hidden');
-
-  fBarcode.value = item.barcode || '';
-  fName.value = item.name || '';
-  setSelectValue(fCategory, item.category || 'Lainnya');
-  setSelectValue(fUnit, item.unit || 'pcs');
-  setSelectValue(fLocation, item.location || 'Lainnya');
-  fStock.value = Number(item.stock || 0);
-  fMinStock.value = Number(item.minStock || 0);
-  fExpired.value = item.expiredDate || '';
-  fNote.value = item.note || '';
-
-  stockAdjustSection.classList.remove('hidden');
-  stockCurrentInfo.innerHTML = formatEditInfo(item);
-  stockQty.value = 1;
-  stockNote.value = '';
-
-  itemModal.classList.remove('hidden');
-}
-
-function closeItemModal() {
-  itemModal.classList.add('hidden');
-  selectedItem = null;
-}
-
-async function saveItemForm() {
-  const data = {
-    barcode: fBarcode.value,
-    name: fName.value,
-    category: fCategory.value,
-    unit: fUnit.value,
-    location: fLocation.value,
-    stock: fStock.value,
-    minStock: fMinStock.value,
-    expiredDate: fExpired.value,
-    note: fNote.value
-  };
-
-  if (!data.barcode.trim() || !data.name.trim()) {
-    return showToast('Barcode dan nama wajib diisi.');
-  }
-
-  try {
-    if (!itemEditMode) {
-      const r = await apiPost('item', data);
-      showToast('Barang berhasil disimpan.');
-      await refreshDashboard();
-      await loadItems();
-      openEditItem(r.item);
-    } else {
-      data.id = selectedItem.id;
-
-      const r = await apiPost('updateitem', data);
-
-      selectedItem = r.item;
-      openEditItem(r.item);
-
-      showToast('Perubahan barang berhasil disimpan.');
-      await refreshDashboard();
-
-      if (!itemsSection.classList.contains('hidden')) {
-        allItems = await apiGet('items');
-        renderItems(allItems);
-      }
-    }
-  } catch (e) {
-    showError(e);
-  }
-}
-
-async function submitStock(type) {
-  if (!selectedItem) return;
-
-  const qty = Number(stockQty.value);
-
-  if (!qty || qty <= 0) {
-    return showToast('Qty harus lebih dari 0.');
-  }
-
-  try {
-    const r = await apiPost('stock', {
-      barcode: selectedItem.barcode,
-      type: type,
-      qty: qty,
-      note: stockNote.value
-    });
-
-    selectedItem = r.item;
-    openEditItem(r.item);
-
-    showToast(
-      type === 'IN'
-        ? 'Stock masuk berhasil.'
-        : 'Stock keluar berhasil.'
-    );
-
-    await refreshDashboard();
-
-    if (!itemsSection.classList.contains('hidden')) {
-      allItems = await apiGet('items');
-      renderItems(allItems);
-    }
-  } catch (e) {
-    showError(e);
-  }
-}
-
-async function loadItems(){
-  hideSections();
-  itemsSection.classList.remove('hidden');
-  try{
-    allItems=await apiGet('items');
-    renderItems(allItems);
-  }catch(e){
-    showError(e);
-  }
-}
-
-function filterItems(){
-  const q=searchBox.value.toLowerCase();
-  renderItems(allItems.filter(i=>
-    [i.name,i.barcode,i.category,i.location]
-      .some(v=>String(v).toLowerCase().includes(q))
-  ));
-}
-
-function renderItems(items){
-  itemsList.innerHTML=items.length
-    ?items.map(i=>{
-      const low=+i.stock<=+i.minStock&&+i.minStock>0;
-      return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
-        <div>
-          <div class="name">${esc(i.name)}</div>
-          <div class="muted">${esc(i.category)} • ${esc(i.location)}</div>
-          <div class="muted">${esc(i.barcode)}</div>
-        </div>
-        <div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div>
-      </div>`
-    }).join('')
-    :'<div class="empty">Tidak ditemukan.</div>';
-})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
+async function loadItems(){hideSections();itemsSection.classList.remove('hidden');try{allItems=await apiGet('items');renderItems(allItems)}catch(e){showError(e)}}
+function filterItems(){const q=searchBox.value.toLowerCase();renderItems(allItems.filter(i=>[i.name,i.barcode,i.category,i.location].some(v=>String(v).toLowerCase().includes(q))))}
+function renderItems(items){itemsList.innerHTML=items.length?items.map(i=>{const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
 async function showLowStock(){hideSections();itemsSection.classList.remove('hidden');const d=await apiGet('dashboard');allItems=d.lowStock;searchBox.value='';renderItems(allItems)}
 function showDashboard(){hideSections();dashboardSection.classList.remove('hidden');refreshDashboard()}
 async function showTransactions(){hideSections();transactionsSection.classList.remove('hidden');try{const rows=await apiGet('transactions',{limit:100});transactionsList.innerHTML=rows.length?rows.map(x=>`<div class="item"><div><div class="name">${esc(x.itemName)}</div><div class="muted">${esc(x.date)} • ${esc(x.location)}</div><div class="muted">${esc(x.barcode)}</div></div><div class="${x.type==='IN'?'ok':'low'} stock">${x.type==='IN'?'+':'-'}${x.qty}</div></div>`).join(''):'<div class="empty">Belum ada transaksi.</div>'}catch(e){showError(e)}}
