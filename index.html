@@ -7,59 +7,267 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>Home Inventory</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#202124;font-family:Arial,sans-serif}
-.app{max-width:760px;margin:auto;min-height:100vh;background:#fff}
-header{background:#1f6feb;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}
-h1{font-size:22px;margin:0}.content{padding:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.card{border:1px solid #e1e5ea;border-radius:14px;padding:14px}.muted{color:#6b7280;font-size:13px}
-.stat{font-size:28px;font-weight:bold;margin-top:5px}button{border:0;border-radius:10px;padding:12px 15px;font-size:15px;background:#1f6feb;color:#fff}
-button.secondary{background:#eef2f7;color:#222}button.success{background:#188038}button.danger{background:#d93025}
-button.big{width:100%;padding:17px;font-weight:bold;font-size:17px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.nav button{font-size:13px;padding:10px 5px}
-input,select{width:100%;padding:12px;border:1px solid #ccd2d9;border-radius:9px;font-size:15px;background:#fff}
-label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
-.section{margin-top:20px}.title{font-size:18px;font-weight:bold;margin-bottom:8px}
-.item{border:1px solid #e3e7eb;border-radius:12px;padding:12px;margin-top:9px;display:flex;justify-content:space-between;gap:10px;align-items:center}
-.name{font-weight:bold}.stock{font-size:18px;font-weight:bold}.low{color:#d93025}.ok{color:#188038}.empty{text-align:center;color:#777;padding:20px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end}
-.modal.hidden,.hidden{display:none}.modalbox{width:100%;max-width:760px;margin:auto;background:#fff;border-radius:18px 18px 0 0;padding:16px;max-height:94vh;overflow:auto}
-#reader{width:100%;min-height:260px;border-radius:12px;overflow:hidden}.scan-help{padding:10px;background:#eef6ff;border-radius:10px;margin:8px 0;font-size:13px}
-.row{display:flex;justify-content:space-between;gap:8px;align-items:center}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:12px 16px;border-radius:10px;z-index:50;display:none;max-width:90%;text-align:center}
-.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#eef2f7}
-.section-title{font-size:16px;font-weight:700;margin-bottom:8px;padding-top:4px}
-.edit-mode{background:#f0f7ff;border:1px solid #cfe3ff}
-.form-divider{height:1px;background:#e7ebef;margin:18px 0}
-
+:root{
+  --primary:#2563eb;
+  --primary-dark:#1d4ed8;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --danger:#dc2626;
+  --warning:#d97706;
+  --success:#16a34a;
+  --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+button{border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.98)}
+.app{max-width:820px;margin:auto;min-height:100vh;background:var(--bg)}
+header{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:24px 18px 26px;position:sticky;top:0;z-index:5;box-shadow:0 4px 18px rgba(37,99,235,.22)}
+.header-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:27px}
+h1{font-size:23px;line-height:1.1;margin:0;font-weight:800;letter-spacing:-.4px}
+.header-sub{margin-top:6px;color:rgba(255,255,255,.82);font-size:13px}
+.refresh-btn{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.16);color:#fff;font-size:20px}
+.content{padding:16px 16px 30px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:-4px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:var(--shadow);min-height:108px;position:relative;overflow:hidden}
+.stat-card:after{content:"";position:absolute;width:58px;height:58px;border-radius:50%;right:-18px;top:-18px;background:#eff6ff}
+.stat-top{display:flex;justify-content:space-between;align-items:center;gap:8px;position:relative;z-index:1}
+.stat-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#eff6ff;font-size:18px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:600}
+.stat{font-size:29px;font-weight:800;line-height:1;margin-top:12px;letter-spacing:-.7px}
+.stat-note{font-size:11px;color:var(--muted);margin-top:7px}
+.scan-wrap{margin-top:14px}
+button.big{width:100%;padding:17px 18px;border-radius:17px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:17px;box-shadow:0 9px 20px rgba(37,99,235,.24)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+button.secondary{background:#fff;color:#1f2937;border:1px solid var(--border);box-shadow:0 3px 10px rgba(15,23,42,.04);padding:13px 12px;border-radius:14px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.nav button{font-size:13px;padding:11px 6px;background:#eef2f7;color:#374151;border-radius:12px;font-weight:600}
+.section{margin-top:22px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.title{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.section-link{font-size:12px;color:var(--primary);font-weight:700;background:none;padding:4px}
+.item{background:#fff;border:1px solid var(--border);border-radius:16px;padding:13px;margin-top:9px;display:flex;justify-content:space-between;gap:12px;align-items:center;box-shadow:0 4px 13px rgba(15,23,42,.04);cursor:pointer}
+.item-main{min-width:0;flex:1}
+.name{font-weight:750;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.muted{color:var(--muted);font-size:12px}
+.item-meta{margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:11px;padding:5px 8px;border-radius:999px;background:#f3f4f6;color:#4b5563;display:inline-flex;align-items:center;gap:4px}
+.stock{font-size:16px;font-weight:800;white-space:nowrap}
+.low{color:var(--danger)}.ok{color:var(--success)}
+.expired-danger{color:var(--danger);background:#fef2f2}.expired-warning{color:var(--warning);background:#fffbeb}.expired-ok{color:var(--success);background:#f0fdf4}
+.empty{background:#fff;border:1px dashed #d1d5db;border-radius:15px;text-align:center;color:#6b7280;padding:22px 15px;margin-top:9px;font-size:13px}
+.expiry-days{font-size:12px;font-weight:800;margin-top:5px}
+input,select{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:15px;background:#fff;color:#111827;outline:none}
+input:focus,select:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,.15)}
+label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:20;display:flex;align-items:flex-end;backdrop-filter:blur(3px)}
+.modal.hidden,.hidden{display:none}
+.modalbox{width:100%;max-width:820px;margin:auto;background:#fff;border-radius:24px 24px 0 0;padding:17px;max-height:94vh;overflow:auto;box-shadow:0 -10px 35px rgba(0,0,0,.16)}
+#reader{width:100%;min-height:280px;border-radius:16px;overflow:hidden;background:#111}
+.scan-help{padding:11px 12px;background:#eff6ff;color:#334155;border-radius:12px;margin:9px 0;font-size:13px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:13px;z-index:50;display:none;max-width:90%;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,.2);font-size:13px}
+.search-wrap{position:relative}.search-wrap input{padding-left:40px}.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#9ca3af}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}.content{padding:20px}.actions{grid-template-columns:1fr 1fr}.app{background:var(--bg)}}
 </style>
+
+<style>
+.section-title{
+  font-size:15px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.stock-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+.stock-action{
+  border:0;
+  border-radius:16px;
+  min-height:76px;
+  padding:12px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  text-align:left;
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.stock-action:active{
+  transform:scale(.97);
+}
+
+.stock-action-icon{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+  font-weight:800;
+  flex:0 0 38px;
+}
+
+.stock-action b{
+  display:block;
+  font-size:14px;
+  line-height:18px;
+}
+
+.stock-action small{
+  display:block;
+  margin-top:2px;
+  font-size:11px;
+  opacity:.72;
+}
+
+.stock-in{
+  background:#eafaf1;
+  color:#157347;
+  box-shadow:0 5px 16px rgba(21,115,71,.10);
+}
+
+.stock-in .stock-action-icon{
+  background:#d4f4e3;
+}
+
+.stock-out{
+  background:#fff0f0;
+  color:#c62828;
+  box-shadow:0 5px 16px rgba(198,40,40,.10);
+}
+
+.stock-out .stock-action-icon{
+  background:#ffdada;
+}
+
+@media (max-width:520px){
+  .stock-actions{
+    gap:8px;
+  }
+
+  .stock-action{
+    min-height:72px;
+    padding:10px 8px;
+    gap:7px;
+  }
+
+  .stock-action-icon{
+    width:34px;
+    height:34px;
+    flex-basis:34px;
+    font-size:22px;
+  }
+
+  .stock-action b{
+    font-size:13px;
+  }
+
+  .stock-action small{
+    font-size:10px;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="app">
-<header><h1>🏠 Home Inventory</h1><div class="muted" style="color:#fff">Makanan & barang rumah</div></header>
+<header>
+  <div class="header-row">
+    <div class="brand">
+      <div class="brand-icon">🏠</div>
+      <div>
+        <h1>Home Inventory</h1>
+        <div class="header-sub">Makanan & barang rumah</div>
+      </div>
+    </div>
+    <button class="refresh-btn" onclick="refreshDashboard()" title="Refresh">↻</button>
+  </div>
+</header>
+
 <div class="content">
-<div class="grid">
-<div class="card"><div class="muted">Total Barang</div><div id="totalItems" class="stat">0</div></div>
-<div class="card"><div class="muted">Total Stock</div><div id="totalStock" class="stat">0</div></div>
-</div>
-<div style="margin-top:12px"><button class="big" onclick="openScanner()">📷 SCAN BARCODE</button></div>
-<div class="actions" style="margin-top:10px">
-<button class="secondary" onclick="openAddItem()">＋ Barang Baru</button>
-<button class="secondary" onclick="showTransactions()">🧾 Riwayat</button>
-</div>
-<div class="nav">
-<button class="secondary" onclick="showDashboard()">Dashboard</button>
-<button class="secondary" onclick="loadItems()">Semua Barang</button>
-<button class="secondary" onclick="showLowStock()">Low Stock</button>
-</div>
-<div id="dashboardSection">
-<div class="section"><div class="title">⚠️ Low Stock</div><div id="lowStockList"></div></div>
-<div class="section"><div class="title">⏰ Expired 7 Hari</div><div id="expiringList"></div></div>
-</div>
-<div id="itemsSection" class="hidden">
-<div class="section"><div class="title">📦 Barang</div><input id="searchBox" placeholder="Cari nama, barcode, kategori..." oninput="filterItems()"><div id="itemsList"></div></div>
-</div>
-<div id="transactionsSection" class="hidden">
-<div class="section"><div class="title">🧾 Riwayat</div><div id="transactionsList"></div></div>
-</div>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-label">TOTAL BARANG</div><div class="stat-icon">📦</div></div>
+      <div id="totalItems" class="stat">0</div>
+      <div class="stat-note">Jenis barang tersimpan</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-label">TOTAL STOCK</div><div class="stat-icon">📊</div></div>
+      <div id="totalStock" class="stat">0</div>
+      <div class="stat-note">Semua unit barang</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-label">LOW STOCK</div><div class="stat-icon">⚠️</div></div>
+      <div id="lowStockCount" class="stat">0</div>
+      <div class="stat-note">Perlu segera dicek</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-top"><div class="stat-label">EXPIRED</div><div class="stat-icon">⏰</div></div>
+      <div id="expiredCount" class="stat">0</div>
+      <div class="stat-note">Sudah / ≤ 7 hari</div>
+    </div>
+  </div>
+
+  <div class="scan-wrap"><button class="big" onclick="openScanner()">📷 &nbsp;SCAN BARCODE</button></div>
+
+  <div class="actions">
+    <button class="secondary" onclick="openAddItem()">＋ &nbsp;Barang Baru</button>
+    <button class="secondary" onclick="showTransactions()">🧾 &nbsp;Riwayat</button>
+  </div>
+
+  <div class="nav">
+    <button onclick="showDashboard()">🏠 Dashboard</button>
+    <button onclick="loadItems()">📦 Semua Barang</button>
+    <button onclick="showLowStock()">⚠️ Low Stock</button>
+  </div>
+
+  <div id="dashboardSection">
+    <div class="section">
+      <div class="section-head">
+        <div class="title">⚠️ Low Stock</div>
+        <button class="section-link" onclick="showLowStock()">Lihat semua ›</button>
+      </div>
+      <div id="lowStockList"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="title">⏰ Paling Dekat Expired</div>
+        <div id="expiryHint" class="muted"></div>
+      </div>
+      <div id="expiringList"></div>
+    </div>
+  </div>
+
+  <div id="itemsSection" class="hidden">
+    <div class="section">
+      <div class="section-head"><div class="title">📦 Semua Barang</div></div>
+      <div class="search-wrap"><span class="search-icon">🔎</span><input id="searchBox" placeholder="Cari nama, barcode, kategori..." oninput="filterItems()"></div>
+      <div id="itemsList"></div>
+    </div>
+  </div>
+
+  <div id="transactionsSection" class="hidden">
+    <div class="section">
+      <div class="section-head"><div class="title">🧾 Riwayat</div></div>
+      <div id="transactionsList"></div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -82,42 +290,15 @@ label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
 
 <div id="editInfo" class="scan-help hidden" style="margin-top:12px"></div>
 
-<label>Barcode *</label>
-<input id="fBarcode" placeholder="Barcode">
-
-<label>Nama Barang *</label>
-<input id="fName" placeholder="Contoh: Susu Ultra Milk">
-
-<label>Kategori</label>
-<select id="fCategory"></select>
-
-<label>Satuan</label>
-<select id="fUnit">
-  <option>pcs</option>
-  <option>pack</option>
-  <option>botol</option>
-  <option>kaleng</option>
-  <option>box</option>
-  <option>kg</option>
-  <option>gram</option>
-  <option>liter</option>
-  <option>lainnya</option>
-</select>
-
-<label>Lokasi</label>
-<select id="fLocation"></select>
-
-<label>Stock</label>
-<input id="fStock" type="number" min="0" value="0">
-
-<label>Minimum Stock</label>
-<input id="fMinStock" type="number" min="0" value="1">
-
-<label>Expired Date</label>
-<input id="fExpired" type="date">
-
-<label>Catatan</label>
-<input id="fNote" placeholder="Opsional">
+<label>Barcode *</label><input id="fBarcode" placeholder="Barcode">
+<label>Nama Barang *</label><input id="fName" placeholder="Contoh: Susu Ultra Milk">
+<label>Kategori</label><select id="fCategory"></select>
+<label>Satuan</label><select id="fUnit"><option>pcs</option><option>pack</option><option>botol</option><option>kaleng</option><option>box</option><option>kg</option><option>gram</option><option>liter</option><option>lainnya</option></select>
+<label>Lokasi</label><select id="fLocation"></select>
+<label>Stock</label><input id="fStock" type="number" min="0" value="0">
+<label>Minimum Stock</label><input id="fMinStock" type="number" min="0" value="1">
+<label>Expired Date</label><input id="fExpired" type="date">
+<label>Catatan</label><input id="fNote" placeholder="Opsional">
 
 <button id="saveItemButton" class="big" style="margin-top:16px" onclick="saveItemForm()">💾 Simpan Barang</button>
 
@@ -125,18 +306,20 @@ label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
   <div class="section-title">📦 Pergerakan Stock</div>
   <div id="stockCurrentInfo" class="scan-help"></div>
 
-  <label>Jumlah</label>
-  <input id="stockQty" type="number" min="1" value="1">
+  <label>Jumlah</label><input id="stockQty" type="number" min="1" value="1">
+  <label>Catatan Transaksi</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
 
-  <label>Catatan Transaksi</label>
-  <input id="stockNote" placeholder="Contoh: Belanja mingguan">
-
-  <div class="actions" style="margin-top:15px">
-    <button class="success" onclick="submitStock('IN')">＋ STOCK MASUK</button>
-    <button class="danger" onclick="submitStock('OUT')">－ STOCK KELUAR</button>
+  <div class="stock-actions">
+    <button class="stock-action stock-in" onclick="submitStock('IN')">
+      <span class="stock-action-icon">＋</span>
+      <span><b>Stock Masuk</b><small>Tambah persediaan</small></span>
+    </button>
+    <button class="stock-action stock-out" onclick="submitStock('OUT')">
+      <span class="stock-action-icon">−</span>
+      <span><b>Stock Keluar</b><small>Kurangi persediaan</small></span>
+    </button>
   </div>
 </div>
-
 </div></div>
 <div id="toast" class="toast"></div>
 
@@ -181,8 +364,51 @@ function apiPost(action,data={}){return fetch(API_URL,{method:'POST',headers:{'C
 document.addEventListener('DOMContentLoaded',async()=>{try{master=await apiGet('master');fillMaster();await refreshDashboard();}catch(e){showError(e)}});
 
 function fillMaster(){fCategory.innerHTML=master.categories.map(x=>`<option>${esc(x)}</option>`).join('');fLocation.innerHTML=master.locations.map(x=>`<option>${esc(x)}</option>`).join('');}
-async function refreshDashboard(){const d=await apiGet('dashboard');totalItems.textContent=d.totalItems;totalStock.textContent=d.totalStock;lowStockList.innerHTML=d.lowStock.length?d.lowStock.map(card).join(''):'<div class="empty">Tidak ada low stock 👍</div>';expiringList.innerHTML=d.expiring.length?d.expiring.map(card).join(''):'<div class="empty">Tidak ada expired dalam 7 hari.</div>'}
-function card(i){const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item"><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.location)} • ${esc(i.category)}</div><div class="muted">${esc(i.barcode)}</div>${i.expiredDate?`<div class="muted">Expired: ${esc(i.expiredDate)}</div>`:''}</div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}
+async function refreshDashboard(){
+  try{
+    const d=await apiGet('dashboard');
+    totalItems.textContent=d.totalItems ?? 0;
+    totalStock.textContent=d.totalStock ?? 0;
+    lowStockCount.textContent=d.lowStockCount ?? (d.lowStock||[]).length;
+    expiredCount.textContent=d.expiredCount ?? 0;
+    expiryHint.textContent=d.expiring7Count ? `${d.expiring7Count} ≤ 7 hari` : '';
+    lowStockList.innerHTML=(d.lowStock||[]).length?d.lowStock.map(card).join(''):'<div class="empty">Tidak ada low stock 👍</div>';
+    expiringList.innerHTML=(d.expiring||[]).length?d.expiring.map(expiryCard).join(''):'<div class="empty">Belum ada tanggal expired yang tercatat.</div>';
+  }catch(e){showError(e)}
+}
+function card(i){
+  const low=+i.stock<=+i.minStock&&+i.minStock>0;
+  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+    <div class="item-main">
+      <div class="name">${esc(i.name)}</div>
+      <div class="item-meta"><span class="badge">📍 ${esc(i.location)}</span><span class="badge">${esc(i.category)}</span></div>
+    </div>
+    <div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div>
+  </div>`;
+}
+function expiryCard(i){
+  const days=Number(i.daysLeft);
+  let cls='expired-ok', text='';
+  if(days<0){cls='expired-danger';text=`Expired ${Math.abs(days)} hari lalu`;}
+  else if(days===0){cls='expired-danger';text='Expired hari ini';}
+  else if(days<=3){cls='expired-danger';text=`${days} hari lagi`;}
+  else if(days<=7){cls='expired-warning';text=`${days} hari lagi`;}
+  else {cls='expired-ok';text=`${days} hari lagi`;}
+  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+    <div class="item-main">
+      <div class="name">${esc(i.name)}</div>
+      <div class="item-meta"><span class="badge">📅 ${formatDateID(i.expiredDate)}</span><span class="badge">📍 ${esc(i.location)}</span></div>
+      <div class="expiry-days ${cls.replace('background','')}">${text}</div>
+    </div>
+    <div class="${+i.stock<=+i.minStock&&+i.minStock>0?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div>
+  </div>`;
+}
+function formatDateID(v){
+  if(!v)return '-';
+  const p=String(v).split('-');
+  if(p.length!==3)return esc(v);
+  return `${p[2]}-${p[1]}-${p[0]}`;
+}
 
 async function openScanner() {
 
@@ -624,174 +850,202 @@ function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(
 let itemEditMode = false;
 
 function setSelectValue(selectEl, value) {
-    const v = String(value ?? '');
-    const exists = Array.from(selectEl.options).some(o => o.value === v);
-    if (exists) {
-        selectEl.value = v;
-    } else if (v) {
-        const opt = document.createElement('option');
-        opt.value = v;
-        opt.textContent = v;
-        selectEl.appendChild(opt);
-        selectEl.value = v;
-    }
+  const v = String(value ?? '');
+  const exists = Array.from(selectEl.options).some(o => o.value === v);
+  if (exists) {
+    selectEl.value = v;
+  } else if (v) {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    selectEl.appendChild(opt);
+    selectEl.value = v;
+  }
 }
 
 function formatEditInfo(item) {
-    return `<b>📦 ${esc(item.name)}</b><br>
-            Barcode: ${esc(item.barcode)}<br>
-            Stock saat ini: <b>${esc(item.stock)} ${esc(item.unit)}</b>`;
+  return `<b>📦 ${esc(item.name)}</b><br>
+          Barcode: ${esc(item.barcode)}<br>
+          Stock saat ini: <b>${esc(item.stock)} ${esc(item.unit)}</b>`;
 }
 
 function openAddItem(barcode='') {
-    itemEditMode = false;
-    selectedItem = null;
+  itemEditMode = false;
+  selectedItem = null;
 
-    itemModalTitle.textContent = '＋ Tambah Barang';
-    itemModalSubtitle.textContent = 'Masukkan data barang baru';
-    saveItemButton.textContent = '💾 Simpan Barang';
+  itemModalTitle.textContent = '＋ Tambah Barang';
+  itemModalSubtitle.textContent = 'Data barang baru';
+  saveItemButton.textContent = '💾 Simpan Barang';
 
-    editInfo.classList.add('hidden');
-    stockAdjustSection.classList.add('hidden');
+  editInfo.classList.add('hidden');
+  stockAdjustSection.classList.add('hidden');
 
-    fBarcode.value = barcode || '';
-    fName.value = '';
-    fStock.value = 0;
-    fMinStock.value = 1;
-    fExpired.value = '';
-    fNote.value = '';
+  fBarcode.value = barcode || '';
+  fName.value = '';
+  fStock.value = 0;
+  fMinStock.value = 1;
+  fExpired.value = '';
+  fNote.value = '';
 
-    if (master.categories.length) setSelectValue(fCategory, master.categories[0]);
-    if (master.locations.length) setSelectValue(fLocation, master.locations[0]);
-    setSelectValue(fUnit, 'pcs');
+  if (master.categories.length) setSelectValue(fCategory, master.categories[0]);
+  if (master.locations.length) setSelectValue(fLocation, master.locations[0]);
+  setSelectValue(fUnit, 'pcs');
 
-    itemModal.classList.remove('hidden');
+  itemModal.classList.remove('hidden');
 }
 
 function openEditItem(item) {
-    if (!item) return;
+  if (!item) return;
 
-    itemEditMode = true;
-    selectedItem = item;
+  itemEditMode = true;
+  selectedItem = item;
 
-    itemModalTitle.textContent = '✏️ Edit Barang';
-    itemModalSubtitle.textContent = 'Ubah informasi barang';
-    saveItemButton.textContent = '💾 Simpan Perubahan';
+  itemModalTitle.textContent = '✏️ Edit Barang';
+  itemModalSubtitle.textContent = 'Ubah informasi barang';
+  saveItemButton.textContent = '💾 Simpan Perubahan';
 
-    editInfo.innerHTML = formatEditInfo(item);
-    editInfo.classList.remove('hidden');
+  editInfo.innerHTML = formatEditInfo(item);
+  editInfo.classList.remove('hidden');
 
-    fBarcode.value = item.barcode || '';
-    fName.value = item.name || '';
-    setSelectValue(fCategory, item.category || 'Lainnya');
-    setSelectValue(fUnit, item.unit || 'pcs');
-    setSelectValue(fLocation, item.location || 'Lainnya');
-    fStock.value = Number(item.stock || 0);
-    fMinStock.value = Number(item.minStock || 0);
-    fExpired.value = item.expiredDate || '';
-    fNote.value = item.note || '';
+  fBarcode.value = item.barcode || '';
+  fName.value = item.name || '';
+  setSelectValue(fCategory, item.category || 'Lainnya');
+  setSelectValue(fUnit, item.unit || 'pcs');
+  setSelectValue(fLocation, item.location || 'Lainnya');
+  fStock.value = Number(item.stock || 0);
+  fMinStock.value = Number(item.minStock || 0);
+  fExpired.value = item.expiredDate || '';
+  fNote.value = item.note || '';
 
-    stockAdjustSection.classList.remove('hidden');
-    stockCurrentInfo.innerHTML = formatEditInfo(item);
-    stockQty.value = 1;
-    stockNote.value = '';
+  stockAdjustSection.classList.remove('hidden');
+  stockCurrentInfo.innerHTML = formatEditInfo(item);
+  stockQty.value = 1;
+  stockNote.value = '';
 
-    itemModal.classList.remove('hidden');
+  itemModal.classList.remove('hidden');
 }
 
 function closeItemModal() {
-    itemModal.classList.add('hidden');
+  itemModal.classList.add('hidden');
+  selectedItem = null;
 }
 
 async function saveItemForm() {
-    const data = {
-        barcode: fBarcode.value,
-        name: fName.value,
-        category: fCategory.value,
-        unit: fUnit.value,
-        location: fLocation.value,
-        stock: fStock.value,
-        minStock: fMinStock.value,
-        expiredDate: fExpired.value,
-        note: fNote.value
-    };
+  const data = {
+    barcode: fBarcode.value,
+    name: fName.value,
+    category: fCategory.value,
+    unit: fUnit.value,
+    location: fLocation.value,
+    stock: fStock.value,
+    minStock: fMinStock.value,
+    expiredDate: fExpired.value,
+    note: fNote.value
+  };
 
-    if (!data.barcode.trim() || !data.name.trim()) {
-        return showToast('Barcode dan nama wajib diisi.');
+  if (!data.barcode.trim() || !data.name.trim()) {
+    return showToast('Barcode dan nama wajib diisi.');
+  }
+
+  try {
+    if (!itemEditMode) {
+      const r = await apiPost('item', data);
+      showToast('Barang berhasil disimpan.');
+      await refreshDashboard();
+      await loadItems();
+      openEditItem(r.item);
+    } else {
+      data.id = selectedItem.id;
+
+      const r = await apiPost('updateitem', data);
+
+      selectedItem = r.item;
+      openEditItem(r.item);
+
+      showToast('Perubahan barang berhasil disimpan.');
+      await refreshDashboard();
+
+      if (!itemsSection.classList.contains('hidden')) {
+        allItems = await apiGet('items');
+        renderItems(allItems);
+      }
     }
-
-    try {
-        if (!itemEditMode) {
-            const r = await apiPost('item', data);
-            closeItemModal();
-            showToast('Barang berhasil disimpan.');
-            await refreshDashboard();
-            await loadItems();
-            openEditItem(r.item);
-        } else {
-            data.id = selectedItem.id;
-
-            const r = await apiPost('updateitem', data);
-
-            selectedItem = r.item;
-            openEditItem(r.item);
-
-            showToast('Perubahan barang berhasil disimpan.');
-            await refreshDashboard();
-
-            // Refresh daftar jika sedang membuka semua barang.
-            if (!itemsSection.classList.contains('hidden')) {
-                allItems = await apiGet('items');
-                renderItems(allItems);
-            }
-        }
-    } catch (e) {
-        showError(e);
-    }
+  } catch (e) {
+    showError(e);
+  }
 }
 
 async function submitStock(type) {
-    if (!selectedItem) return;
+  if (!selectedItem) return;
 
-    const qty = Number(stockQty.value);
+  const qty = Number(stockQty.value);
 
-    if (!qty || qty <= 0) {
-        return showToast('Qty harus lebih dari 0.');
+  if (!qty || qty <= 0) {
+    return showToast('Qty harus lebih dari 0.');
+  }
+
+  try {
+    const r = await apiPost('stock', {
+      barcode: selectedItem.barcode,
+      type: type,
+      qty: qty,
+      note: stockNote.value
+    });
+
+    selectedItem = r.item;
+    openEditItem(r.item);
+
+    showToast(
+      type === 'IN'
+        ? 'Stock masuk berhasil.'
+        : 'Stock keluar berhasil.'
+    );
+
+    await refreshDashboard();
+
+    if (!itemsSection.classList.contains('hidden')) {
+      allItems = await apiGet('items');
+      renderItems(allItems);
     }
-
-    try {
-        const r = await apiPost('stock', {
-            barcode: selectedItem.barcode,
-            type: type,
-            qty: qty,
-            note: stockNote.value
-        });
-
-        selectedItem = r.item;
-
-        openEditItem(r.item);
-
-        showToast(
-            type === 'IN'
-                ? 'Stock masuk berhasil.'
-                : 'Stock keluar berhasil.'
-        );
-
-        await refreshDashboard();
-
-        if (!itemsSection.classList.contains('hidden')) {
-            allItems = await apiGet('items');
-            renderItems(allItems);
-        }
-
-    } catch (e) {
-        showError(e);
-    }
+  } catch (e) {
+    showError(e);
+  }
 }
 
-async function loadItems(){hideSections();itemsSection.classList.remove('hidden');try{allItems=await apiGet('items');renderItems(allItems)}catch(e){showError(e)}}
-function filterItems(){const q=searchBox.value.toLowerCase();renderItems(allItems.filter(i=>[i.name,i.barcode,i.category,i.location].some(v=>String(v).toLowerCase().includes(q))))}
-function renderItems(items){itemsList.innerHTML=items.length?items.map(i=>{const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
+async function loadItems(){
+  hideSections();
+  itemsSection.classList.remove('hidden');
+  try{
+    allItems=await apiGet('items');
+    renderItems(allItems);
+  }catch(e){
+    showError(e);
+  }
+}
+
+function filterItems(){
+  const q=searchBox.value.toLowerCase();
+  renderItems(allItems.filter(i=>
+    [i.name,i.barcode,i.category,i.location]
+      .some(v=>String(v).toLowerCase().includes(q))
+  ));
+}
+
+function renderItems(items){
+  itemsList.innerHTML=items.length
+    ?items.map(i=>{
+      const low=+i.stock<=+i.minStock&&+i.minStock>0;
+      return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+        <div>
+          <div class="name">${esc(i.name)}</div>
+          <div class="muted">${esc(i.category)} • ${esc(i.location)}</div>
+          <div class="muted">${esc(i.barcode)}</div>
+        </div>
+        <div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div>
+      </div>`
+    }).join('')
+    :'<div class="empty">Tidak ditemukan.</div>';
+})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
 async function showLowStock(){hideSections();itemsSection.classList.remove('hidden');const d=await apiGet('dashboard');allItems=d.lowStock;searchBox.value='';renderItems(allItems)}
 function showDashboard(){hideSections();dashboardSection.classList.remove('hidden');refreshDashboard()}
 async function showTransactions(){hideSections();transactionsSection.classList.remove('hidden');try{const rows=await apiGet('transactions',{limit:100});transactionsList.innerHTML=rows.length?rows.map(x=>`<div class="item"><div><div class="name">${esc(x.itemName)}</div><div class="muted">${esc(x.date)} • ${esc(x.location)}</div><div class="muted">${esc(x.barcode)}</div></div><div class="${x.type==='IN'?'ok':'low'} stock">${x.type==='IN'?'+':'-'}${x.qty}</div></div>`).join(''):'<div class="empty">Belum ada transaksi.</div>'}catch(e){showError(e)}}
