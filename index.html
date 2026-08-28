@@ -91,7 +91,9 @@ label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
 <div id="toast" class="toast"></div>
 
 <script>
-const API_URL='https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQiDkJ35PNf_EVVjFrO7lA_5Ftgc5PekflEc8fba5CA5DPKZ8QfORaMInMDqRuObbvCems7ns1Br-TnSqJgknP6O2u6fvhM7MuC6Z3sWYqA-HW-MQtf7nkN3RkwWkt-b0Z7NftRWVB-K3pcJ5DFO5HmoIvNl-KO232TNMzUYTx7Cs37JeitPgGHh5_nuf0HNkoyQiNvW-hMFFG_EZgqLNnudsF-OFI011c_TzFOQaKHxjDfJwBtg0I_-cMiYpEcCkCzeWRD3ZR-DHYfxrjaGUcSWEAebg&lib=MFlqvi8LFGO9y_aEiMsoNSPqJ0R2ZjajX';
+
+
+const API_URL='https://script.google.com/macros/s/AKfycbxvvK_ucJlg-QKPytEolNuRniZljuQTANPzaa5aFKFAl3_RN6D1z8Po9NfU_Pece2dV/exec'
 const API_KEY='';
 let allItems=[],master={categories:[],locations:[]},scanner=null,selectedItem=null;
 
@@ -104,21 +106,221 @@ function fillMaster(){fCategory.innerHTML=master.categories.map(x=>`<option>${es
 async function refreshDashboard(){const d=await apiGet('dashboard');totalItems.textContent=d.totalItems;totalStock.textContent=d.totalStock;lowStockList.innerHTML=d.lowStock.length?d.lowStock.map(card).join(''):'<div class="empty">Tidak ada low stock 👍</div>';expiringList.innerHTML=d.expiring.length?d.expiring.map(card).join(''):'<div class="empty">Tidak ada expired dalam 7 hari.</div>'}
 function card(i){const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item"><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.location)} • ${esc(i.category)}</div><div class="muted">${esc(i.barcode)}</div>${i.expiredDate?`<div class="muted">Expired: ${esc(i.expiredDate)}</div>`:''}</div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}
 
-async function openScanner(){
-  scannerModal.classList.remove('hidden');scanStatus.classList.add('hidden');reader.innerHTML='';
-  if(!window.isSecureContext){scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Halaman scanner harus HTTPS.';return;}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Browser tidak mendukung kamera.';return;}
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
-    stream.getTracks().forEach(t=>t.stop());
-    await loadScannerLibrary();
-    scanner=new Html5Qrcode('reader');
-    await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:280,height:160}},txt=>handleBarcode(txt),()=>{});
-  }catch(e){console.error(e);scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Kamera gagal: '+e.name+' - '+e.message;}
+async function openScanner() {
+
+    scannerModal.classList.remove('hidden');
+    scanStatus.classList.add('hidden');
+    reader.innerHTML = '';
+
+    if (!window.isSecureContext) {
+        scanStatus.classList.remove('hidden');
+        scanStatus.textContent =
+            '❌ Scanner harus dibuka melalui HTTPS.';
+        return;
+    }
+
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
+
+        scanStatus.classList.remove('hidden');
+        scanStatus.textContent =
+            '❌ Browser tidak mendukung kamera.';
+        return;
+    }
+
+    try {
+
+        // Test permission kamera terlebih dahulu
+        const stream =
+            await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: {
+                        ideal: 'environment'
+                    }
+                }
+            });
+
+        stream.getTracks().forEach(track => track.stop());
+
+        await loadScannerLibrary();
+
+        scanner = new Html5Qrcode('reader');
+
+        const formats = [
+
+            // QR
+            Html5QrcodeSupportedFormats.QR_CODE,
+
+            // Barcode produk
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+
+            // UPC
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+
+            // Code
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.CODE_93,
+
+            // ITF
+            Html5QrcodeSupportedFormats.ITF,
+
+            // Codabar
+            Html5QrcodeSupportedFormats.CODABAR
+        ];
+
+        const config = {
+
+            fps: 15,
+
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+
+                const width =
+                    Math.min(viewfinderWidth * 0.85, 420);
+
+                const height =
+                    Math.min(viewfinderHeight * 0.35, 180);
+
+                return {
+                    width: width,
+                    height: height
+                };
+            },
+
+            formatsToSupport: formats,
+
+            rememberLastUsedCamera: true,
+
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            }
+        };
+
+        await scanner.start(
+
+            {
+                facingMode: {
+                    ideal: 'environment'
+                }
+            },
+
+            config,
+
+            function(decodedText, decodedResult) {
+
+                console.log(
+                    'SCAN BERHASIL:',
+                    decodedText,
+                    decodedResult
+                );
+
+                handleBarcode(decodedText);
+            },
+
+            function(errorMessage) {
+
+                // Jangan tampilkan error ke user.
+                // Scanner memang terus melakukan percobaan.
+            }
+        );
+
+    } catch (e) {
+
+        console.error('CAMERA ERROR:', e);
+
+        scanStatus.classList.remove('hidden');
+
+        scanStatus.textContent =
+            '❌ Kamera gagal: ' +
+            e.name +
+            ' - ' +
+            e.message;
+    }
 }
-function loadScannerLibrary(){return new Promise((resolve,reject)=>{if(window.Html5Qrcode)return resolve();const s=document.createElement('script');s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';s.onload=resolve;s.onerror=()=>reject(new Error('Library scanner gagal dimuat'));document.head.appendChild(s);});}
+function loadScannerLibrary() {
+
+    return new Promise((resolve, reject) => {
+
+        if (
+            window.Html5Qrcode &&
+            window.Html5QrcodeSupportedFormats
+        ) {
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+
+        script.src =
+            'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+
+        script.onload = () => {
+
+            if (
+                window.Html5Qrcode &&
+                window.Html5QrcodeSupportedFormats
+            ) {
+                resolve();
+            } else {
+                reject(
+                    new Error(
+                        'Library html5-qrcode tidak lengkap.'
+                    )
+                );
+            }
+        };
+
+        script.onerror = () => {
+            reject(
+                new Error(
+                    'Gagal memuat html5-qrcode.'
+                )
+            );
+        };
+
+        document.head.appendChild(script);
+    });
+}
 async function closeScanner(){if(scanner){try{await scanner.stop();scanner.clear()}catch(e){}scanner=null}reader.innerHTML='';scannerModal.classList.add('hidden')}
-async function handleBarcode(code){await closeScanner();try{const r=await apiGet('find',{barcode:String(code).trim()});if(r.found)openStockModal(r.item);else openAddItem(r.barcode)}catch(e){showError(e)}}
+async function handleBarcode(code) {
+    const barcode = String(code || '').trim();
+
+    if (!barcode) {
+        showToast('Barcode kosong.');
+        return;
+    }
+
+    console.log('BARCODE TERBACA:', barcode);
+
+    await closeScanner();
+
+    try {
+        const result = await apiGet('find', {
+            barcode: barcode
+        });
+
+        console.log('HASIL API FIND:', result);
+
+        if (!result) {
+            throw new Error('Response API kosong.');
+        }
+
+        // Support response format baru maupun lama
+        const data = result.data || result;
+
+        if (data.found === true) {
+            openStockModal(data.item);
+        } else {
+            openAddItem(data.barcode || barcode);
+        }
+
+    } catch (e) {
+        console.error('Barcode error:', e);
+        showError(e);
+    }
+}
 function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(b.trim())}
 
 function openAddItem(barcode=''){fBarcode.value=barcode;fName.value='';fStock.value=0;fMinStock.value=1;fExpired.value='';fNote.value='';itemModal.classList.remove('hidden')}
