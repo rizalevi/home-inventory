@@ -97,7 +97,35 @@ const API_URL='https://script.google.com/macros/s/AKfycbxvvK_ucJlg-QKPytEolNuRni
 const API_KEY='';
 let allItems=[],master={categories:[],locations:[]},scanner=null,selectedItem=null;
 
-function apiGet(action,params={}){const u=new URL(API_URL);u.searchParams.set('action',action);if(API_KEY)u.searchParams.set('key',API_KEY);Object.keys(params).forEach(k=>u.searchParams.set(k,params[k]));return fetch(u).then(r=>r.json()).then(x=>{if(!x.success)throw new Error(x.message||'API error');return x.data});}
+function apiGet(action, params = {}) {
+
+    const u = new URL(API_URL);
+
+    u.searchParams.set('action', action);
+
+    if (API_KEY) {
+        u.searchParams.set('key', API_KEY);
+    }
+
+    Object.keys(params).forEach(k => {
+        u.searchParams.set(k, params[k]);
+    });
+
+    return fetch(u)
+        .then(r => r.json())
+        .then(x => {
+
+            console.log('API RESPONSE:', x);
+
+            if (!x.success) {
+                throw new Error(
+                    x.message || 'API error'
+                );
+            }
+
+            return x.data;
+        });
+}
 function apiPost(action,data={}){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...data,action,key:API_KEY})}).then(r=>r.json()).then(x=>{if(!x.success)throw new Error(x.message||'API error');return x});}
 
 document.addEventListener('DOMContentLoaded',async()=>{try{master=await apiGet('master');fillMaster();await refreshDashboard();}catch(e){showError(e)}});
@@ -285,6 +313,7 @@ function loadScannerLibrary() {
 }
 async function closeScanner(){if(scanner){try{await scanner.stop();scanner.clear()}catch(e){}scanner=null}reader.innerHTML='';scannerModal.classList.add('hidden')}
 async function handleBarcode(code) {
+
     const barcode = String(code || '').trim();
 
     if (!barcode) {
@@ -292,33 +321,67 @@ async function handleBarcode(code) {
         return;
     }
 
+    console.log('=================================');
     console.log('BARCODE TERBACA:', barcode);
+    console.log('=================================');
 
+    // Tutup kamera terlebih dahulu
     await closeScanner();
 
     try {
+
         const result = await apiGet('find', {
             barcode: barcode
         });
 
         console.log('HASIL API FIND:', result);
 
-        if (!result) {
+        // ==============================
+        // VALIDASI RESPONSE
+        // ==============================
+
+        if (result === undefined || result === null) {
             throw new Error('Response API kosong.');
         }
 
-        // Support response format baru maupun lama
-        const data = result.data || result;
+        console.log('FOUND:', result.found);
+        console.log('ITEM:', result.item);
 
-        if (data.found === true) {
-            openStockModal(data.item);
-        } else {
-            openAddItem(data.barcode || barcode);
+        // ==============================
+        // BARANG SUDAH TERDAFTAR
+        // ==============================
+
+        if (result.found === true) {
+
+            console.log('Barang ditemukan:', result.item);
+
+            openStockModal(result.item);
+
+            return;
         }
 
-    } catch (e) {
-        console.error('Barcode error:', e);
-        showError(e);
+        // ==============================
+        // BARANG BELUM TERDAFTAR
+        // ==============================
+
+        console.log('Barcode baru:', barcode);
+
+        openAddItem(
+            result.barcode || barcode
+        );
+
+    }
+    catch (e) {
+
+        console.error(
+            'ERROR HANDLE BARCODE:',
+            e
+        );
+
+        showToast(
+            e.message ||
+            'Terjadi kesalahan saat membaca barcode.'
+        );
     }
 }
 function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(b.trim())}
