@@ -245,34 +245,80 @@ async function openScanner() {
         // ==============================
 
         const config = {
-
             fps: 10,
-
             qrbox: function(
                 viewfinderWidth,
                 viewfinderHeight
             ) {
-
+        
                 const width =
                     Math.min(
                         viewfinderWidth * 0.85,
                         400
                     );
-
+        
                 const height =
                     Math.min(
                         viewfinderHeight * 0.35,
                         180
                     );
-
+        
                 return {
                     width: width,
                     height: height
                 };
             },
-
+        
+            formatsToSupport: [
+        
+                // ==========================
+                // QR CODE
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.QR_CODE,
+        
+                // ==========================
+                // BARCODE PRODUK
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+        
+                // ==========================
+                // UPC
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+        
+                // ==========================
+                // CODE 128
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.CODE_128,
+        
+                // ==========================
+                // CODE 39
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.CODE_39,
+        
+                // ==========================
+                // CODE 93
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.CODE_93,
+        
+                // ==========================
+                // ITF
+                // ==========================
+        
+                Html5QrcodeSupportedFormats.ITF
+        
+            ],
+        
             rememberLastUsedCamera: true
-
+        
         };
 
         // ==============================
