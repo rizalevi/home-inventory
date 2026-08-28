@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f6feb">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Home Inventory</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#202124;font-family:Arial,sans-serif}
+.app{max-width:760px;margin:auto;min-height:100vh;background:#fff}
+header{background:#1f6feb;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}
+h1{font-size:22px;margin:0}.content{padding:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{border:1px solid #e1e5ea;border-radius:14px;padding:14px}.muted{color:#6b7280;font-size:13px}
+.stat{font-size:28px;font-weight:bold;margin-top:5px}button{border:0;border-radius:10px;padding:12px 15px;font-size:15px;background:#1f6feb;color:#fff}
+button.secondary{background:#eef2f7;color:#222}button.success{background:#188038}button.danger{background:#d93025}
+button.big{width:100%;padding:17px;font-weight:bold;font-size:17px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.nav button{font-size:13px;padding:10px 5px}
+input,select{width:100%;padding:12px;border:1px solid #ccd2d9;border-radius:9px;font-size:15px;background:#fff}
+label{display:block;font-weight:bold;font-size:13px;margin:13px 0 6px}
+.section{margin-top:20px}.title{font-size:18px;font-weight:bold;margin-bottom:8px}
+.item{border:1px solid #e3e7eb;border-radius:12px;padding:12px;margin-top:9px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.name{font-weight:bold}.stock{font-size:18px;font-weight:bold}.low{color:#d93025}.ok{color:#188038}.empty{text-align:center;color:#777;padding:20px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end}
+.modal.hidden,.hidden{display:none}.modalbox{width:100%;max-width:760px;margin:auto;background:#fff;border-radius:18px 18px 0 0;padding:16px;max-height:94vh;overflow:auto}
+#reader{width:100%;min-height:260px;border-radius:12px;overflow:hidden}.scan-help{padding:10px;background:#eef6ff;border-radius:10px;margin:8px 0;font-size:13px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:12px 16px;border-radius:10px;z-index:50;display:none;max-width:90%;text-align:center}
+.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#eef2f7}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🏠 Home Inventory</h1><div class="muted" style="color:#fff">Makanan & barang rumah</div></header>
+<div class="content">
+<div class="grid">
+<div class="card"><div class="muted">Total Barang</div><div id="totalItems" class="stat">0</div></div>
+<div class="card"><div class="muted">Total Stock</div><div id="totalStock" class="stat">0</div></div>
+</div>
+<div style="margin-top:12px"><button class="big" onclick="openScanner()">📷 SCAN BARCODE</button></div>
+<div class="actions" style="margin-top:10px">
+<button class="secondary" onclick="openAddItem()">＋ Barang Baru</button>
+<button class="secondary" onclick="showTransactions()">🧾 Riwayat</button>
+</div>
+<div class="nav">
+<button class="secondary" onclick="showDashboard()">Dashboard</button>
+<button class="secondary" onclick="loadItems()">Semua Barang</button>
+<button class="secondary" onclick="showLowStock()">Low Stock</button>
+</div>
+<div id="dashboardSection">
+<div class="section"><div class="title">⚠️ Low Stock</div><div id="lowStockList"></div></div>
+<div class="section"><div class="title">⏰ Expired 7 Hari</div><div id="expiringList"></div></div>
+</div>
+<div id="itemsSection" class="hidden">
+<div class="section"><div class="title">📦 Barang</div><input id="searchBox" placeholder="Cari nama, barcode, kategori..." oninput="filterItems()"><div id="itemsList"></div></div>
+</div>
+<div id="transactionsSection" class="hidden">
+<div class="section"><div class="title">🧾 Riwayat</div><div id="transactionsList"></div></div>
+</div>
+</div>
+</div>
+
+<div id="scannerModal" class="modal hidden"><div class="modalbox">
+<div class="row"><h3 style="margin:0">📷 Scan Barcode</h3><button class="secondary" onclick="closeScanner()">Tutup</button></div>
+<div class="scan-help">Izinkan kamera. Arahkan barcode ke kotak scanner.</div>
+<div id="reader"></div>
+<div style="margin-top:10px"><button class="secondary" style="width:100%" onclick="manualBarcode()">⌨️ Input Barcode Manual</button></div>
+<div id="scanStatus" class="scan-help hidden"></div>
+</div></div>
+
+<div id="itemModal" class="modal hidden"><div class="modalbox">
+<div class="row"><h3 style="margin:0">＋ Tambah Barang</h3><button class="secondary" onclick="closeItemModal()">Tutup</button></div>
+<label>Barcode *</label><input id="fBarcode" placeholder="Barcode">
+<label>Nama Barang *</label><input id="fName" placeholder="Contoh: Susu Ultra Milk">
+<label>Kategori</label><select id="fCategory"></select>
+<label>Satuan</label><select id="fUnit"><option>pcs</option><option>pack</option><option>botol</option><option>kaleng</option><option>box</option><option>kg</option><option>gram</option><option>liter</option><option>lainnya</option></select>
+<label>Lokasi</label><select id="fLocation"></select>
+<label>Stock Awal</label><input id="fStock" type="number" min="0" value="0">
+<label>Minimum Stock</label><input id="fMinStock" type="number" min="0" value="1">
+<label>Expired Date</label><input id="fExpired" type="date">
+<label>Catatan</label><input id="fNote" placeholder="Opsional">
+<button class="big" style="margin-top:16px" onclick="saveNewItem()">💾 Simpan Barang</button>
+</div></div>
+
+<div id="stockModal" class="modal hidden"><div class="modalbox">
+<div class="row"><h3 id="stockTitle" style="margin:0">Stock</h3><button class="secondary" onclick="closeStockModal()">Tutup</button></div>
+<div id="stockInfo" class="scan-help"></div>
+<label>Jumlah</label><input id="stockQty" type="number" min="1" value="1">
+<label>Catatan</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
+<div class="actions" style="margin-top:15px"><button class="success" onclick="submitStock('IN')">＋ STOCK MASUK</button><button class="danger" onclick="submitStock('OUT')">－ STOCK KELUAR</button></div>
+</div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const API_URL='https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQiDkJ35PNf_EVVjFrO7lA_5Ftgc5PekflEc8fba5CA5DPKZ8QfORaMInMDqRuObbvCems7ns1Br-TnSqJgknP6O2u6fvhM7MuC6Z3sWYqA-HW-MQtf7nkN3RkwWkt-b0Z7NftRWVB-K3pcJ5DFO5HmoIvNl-KO232TNMzUYTx7Cs37JeitPgGHh5_nuf0HNkoyQiNvW-hMFFG_EZgqLNnudsF-OFI011c_TzFOQaKHxjDfJwBtg0I_-cMiYpEcCkCzeWRD3ZR-DHYfxrjaGUcSWEAebg&lib=MFlqvi8LFGO9y_aEiMsoNSPqJ0R2ZjajX';
+const API_KEY='';
+let allItems=[],master={categories:[],locations:[]},scanner=null,selectedItem=null;
+
+function apiGet(action,params={}){const u=new URL(API_URL);u.searchParams.set('action',action);if(API_KEY)u.searchParams.set('key',API_KEY);Object.keys(params).forEach(k=>u.searchParams.set(k,params[k]));return fetch(u).then(r=>r.json()).then(x=>{if(!x.success)throw new Error(x.message||'API error');return x.data});}
+function apiPost(action,data={}){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...data,action,key:API_KEY})}).then(r=>r.json()).then(x=>{if(!x.success)throw new Error(x.message||'API error');return x});}
+
+document.addEventListener('DOMContentLoaded',async()=>{try{master=await apiGet('master');fillMaster();await refreshDashboard();}catch(e){showError(e)}});
+
+function fillMaster(){fCategory.innerHTML=master.categories.map(x=>`<option>${esc(x)}</option>`).join('');fLocation.innerHTML=master.locations.map(x=>`<option>${esc(x)}</option>`).join('');}
+async function refreshDashboard(){const d=await apiGet('dashboard');totalItems.textContent=d.totalItems;totalStock.textContent=d.totalStock;lowStockList.innerHTML=d.lowStock.length?d.lowStock.map(card).join(''):'<div class="empty">Tidak ada low stock 👍</div>';expiringList.innerHTML=d.expiring.length?d.expiring.map(card).join(''):'<div class="empty">Tidak ada expired dalam 7 hari.</div>'}
+function card(i){const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item"><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.location)} • ${esc(i.category)}</div><div class="muted">${esc(i.barcode)}</div>${i.expiredDate?`<div class="muted">Expired: ${esc(i.expiredDate)}</div>`:''}</div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}
+
+async function openScanner(){
+  scannerModal.classList.remove('hidden');scanStatus.classList.add('hidden');reader.innerHTML='';
+  if(!window.isSecureContext){scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Halaman scanner harus HTTPS.';return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Browser tidak mendukung kamera.';return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+    stream.getTracks().forEach(t=>t.stop());
+    await loadScannerLibrary();
+    scanner=new Html5Qrcode('reader');
+    await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:280,height:160}},txt=>handleBarcode(txt),()=>{});
+  }catch(e){console.error(e);scanStatus.classList.remove('hidden');scanStatus.textContent='❌ Kamera gagal: '+e.name+' - '+e.message;}
+}
+function loadScannerLibrary(){return new Promise((resolve,reject)=>{if(window.Html5Qrcode)return resolve();const s=document.createElement('script');s.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';s.onload=resolve;s.onerror=()=>reject(new Error('Library scanner gagal dimuat'));document.head.appendChild(s);});}
+async function closeScanner(){if(scanner){try{await scanner.stop();scanner.clear()}catch(e){}scanner=null}reader.innerHTML='';scannerModal.classList.add('hidden')}
+async function handleBarcode(code){await closeScanner();try{const r=await apiGet('find',{barcode:String(code).trim()});if(r.found)openStockModal(r.item);else openAddItem(r.barcode)}catch(e){showError(e)}}
+function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(b.trim())}
+
+function openAddItem(barcode=''){fBarcode.value=barcode;fName.value='';fStock.value=0;fMinStock.value=1;fExpired.value='';fNote.value='';itemModal.classList.remove('hidden')}
+function closeItemModal(){itemModal.classList.add('hidden')}
+async function saveNewItem(){
+ const data={barcode:fBarcode.value,name:fName.value,category:fCategory.value,unit:fUnit.value,location:fLocation.value,stock:fStock.value,minStock:fMinStock.value,expiredDate:fExpired.value,note:fNote.value};
+ if(!data.barcode.trim()||!data.name.trim())return showToast('Barcode dan nama wajib diisi.');
+ try{const r=await apiPost('item',data);closeItemModal();showToast('Barang berhasil disimpan.');await refreshDashboard();await loadItems();openStockModal(r.item)}catch(e){showError(e)}
+}
+function openStockModal(item){selectedItem=item;stockTitle.textContent=item.name;stockInfo.innerHTML=`<b>Stock: ${item.stock} ${esc(item.unit)}</b><br>Barcode: ${esc(item.barcode)}<br>Lokasi: ${esc(item.location)}`;stockQty.value=1;stockNote.value='';stockModal.classList.remove('hidden')}
+function closeStockModal(){stockModal.classList.add('hidden');selectedItem=null}
+async function submitStock(type){if(!selectedItem)return;const qty=+stockQty.value;if(!qty||qty<=0)return showToast('Qty harus lebih dari 0.');try{const r=await apiPost('stock',{barcode:selectedItem.barcode,type,qty,note:stockNote.value});closeStockModal();showToast(type==='IN'?'Stock masuk berhasil.':'Stock keluar berhasil.');await refreshDashboard();await loadItems()}catch(e){showError(e)}}
+
+async function loadItems(){hideSections();itemsSection.classList.remove('hidden');try{allItems=await apiGet('items');renderItems(allItems)}catch(e){showError(e)}}
+function filterItems(){const q=searchBox.value.toLowerCase();renderItems(allItems.filter(i=>[i.name,i.barcode,i.category,i.location].some(v=>String(v).toLowerCase().includes(q))))}
+function renderItems(items){itemsList.innerHTML=items.length?items.map(i=>{const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
+async function showLowStock(){hideSections();itemsSection.classList.remove('hidden');const d=await apiGet('dashboard');allItems=d.lowStock;searchBox.value='';renderItems(allItems)}
+function showDashboard(){hideSections();dashboardSection.classList.remove('hidden');refreshDashboard()}
+async function showTransactions(){hideSections();transactionsSection.classList.remove('hidden');try{const rows=await apiGet('transactions',{limit:100});transactionsList.innerHTML=rows.length?rows.map(x=>`<div class="item"><div><div class="name">${esc(x.itemName)}</div><div class="muted">${esc(x.date)} • ${esc(x.location)}</div><div class="muted">${esc(x.barcode)}</div></div><div class="${x.type==='IN'?'ok':'low'} stock">${x.type==='IN'?'+':'-'}${x.qty}</div></div>`).join(''):'<div class="empty">Belum ada transaksi.</div>'}catch(e){showError(e)}}
+function hideSections(){dashboardSection.classList.add('hidden');itemsSection.classList.add('hidden');transactionsSection.classList.add('hidden')}
+function showError(e){showToast(e.message||String(e));console.error(e)}
+function showToast(m){toast.textContent=m;toast.style.display='block';setTimeout(()=>toast.style.display='none',3000)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(console.warn);
+</script>
+</body></html>
