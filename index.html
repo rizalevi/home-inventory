@@ -174,25 +174,25 @@ label{display:block;font-weight:700;font-size:13px;margin:14px 0 6px}
 </div></div>
 
 <div id="itemModal" class="modal hidden"><div class="modalbox">
-<div class="row"><h3 style="margin:0">＋ Tambah Barang</h3><button class="secondary" onclick="closeItemModal()">Tutup</button></div>
+<div class="row"><h3 id="itemModalTitle" style="margin:0">＋ Tambah Barang</h3><button class="secondary" onclick="closeItemModal()">Tutup</button></div>
+<div id="editInfo" class="scan-help hidden" style="margin-top:10px"></div>
 <label>Barcode *</label><input id="fBarcode" placeholder="Barcode">
 <label>Nama Barang *</label><input id="fName" placeholder="Contoh: Susu Ultra Milk">
 <label>Kategori</label><select id="fCategory"></select>
 <label>Satuan</label><select id="fUnit"><option>pcs</option><option>pack</option><option>botol</option><option>kaleng</option><option>box</option><option>kg</option><option>gram</option><option>liter</option><option>lainnya</option></select>
 <label>Lokasi</label><select id="fLocation"></select>
-<label>Stock Awal</label><input id="fStock" type="number" min="0" value="0">
+<label id="stockLabel">Stock Awal</label><input id="fStock" type="number" min="0" value="0">
 <label>Minimum Stock</label><input id="fMinStock" type="number" min="0" value="1">
 <label>Expired Date</label><input id="fExpired" type="date">
 <label>Catatan</label><input id="fNote" placeholder="Opsional">
-<button class="big" style="margin-top:16px" onclick="saveNewItem()">💾 Simpan Barang</button>
-</div></div>
+<button id="saveItemButton" class="big" style="margin-top:16px" onclick="saveItemForm()">💾 Simpan Barang</button>
 
-<div id="stockModal" class="modal hidden"><div class="modalbox">
-<div class="row"><h3 id="stockTitle" style="margin:0">Stock</h3><button class="secondary" onclick="closeStockModal()">Tutup</button></div>
-<div id="stockInfo" class="scan-help"></div>
+<div id="stockAdjustSection" class="hidden" style="margin-top:18px">
+<div class="scan-help"><b>📦 Pergerakan Stock</b><br>Stock saat ini: <b id="stockCurrent"></b></div>
 <label>Jumlah</label><input id="stockQty" type="number" min="1" value="1">
-<label>Catatan</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
+<label>Catatan Transaksi</label><input id="stockNote" placeholder="Contoh: Belanja mingguan">
 <div class="actions" style="margin-top:15px"><button class="success" onclick="submitStock('IN')">＋ STOCK MASUK</button><button class="danger" onclick="submitStock('OUT')">－ STOCK KELUAR</button></div>
+</div>
 </div></div>
 <div id="toast" class="toast"></div>
 
@@ -251,7 +251,7 @@ async function refreshDashboard(){
 }
 function card(i){
   const low=+i.stock<=+i.minStock&&+i.minStock>0;
-  return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
     <div class="item-main">
       <div class="name">${esc(i.name)}</div>
       <div class="item-meta"><span class="badge">📍 ${esc(i.location)}</span><span class="badge">${esc(i.category)}</span></div>
@@ -267,7 +267,7 @@ function expiryCard(i){
   else if(days<=3){cls='expired-danger';text=`${days} hari lagi`;}
   else if(days<=7){cls='expired-warning';text=`${days} hari lagi`;}
   else {cls='expired-ok';text=`${days} hari lagi`;}
-  return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+  return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
     <div class="item-main">
       <div class="name">${esc(i.name)}</div>
       <div class="item-meta"><span class="badge">📅 ${formatDateID(i.expiredDate)}</span><span class="badge">📍 ${esc(i.location)}</span></div>
@@ -689,7 +689,7 @@ async function handleBarcode(code) {
 
             console.log('Barang ditemukan:', result.item);
 
-            openStockModal(result.item);
+            openEditItem(result.item);
 
             return;
         }
@@ -720,20 +720,18 @@ async function handleBarcode(code) {
 }
 function manualBarcode(){const b=prompt('Masukkan barcode:');if(b)handleBarcode(b.trim())}
 
-function openAddItem(barcode=''){fBarcode.value=barcode;fName.value='';fStock.value=0;fMinStock.value=1;fExpired.value='';fNote.value='';itemModal.classList.remove('hidden')}
-function closeItemModal(){itemModal.classList.add('hidden')}
-async function saveNewItem(){
- const data={barcode:fBarcode.value,name:fName.value,category:fCategory.value,unit:fUnit.value,location:fLocation.value,stock:fStock.value,minStock:fMinStock.value,expiredDate:fExpired.value,note:fNote.value};
- if(!data.barcode.trim()||!data.name.trim())return showToast('Barcode dan nama wajib diisi.');
- try{const r=await apiPost('item',data);closeItemModal();showToast('Barang berhasil disimpan.');await refreshDashboard();await loadItems();openStockModal(r.item)}catch(e){showError(e)}
-}
-function openStockModal(item){selectedItem=item;stockTitle.textContent=item.name;stockInfo.innerHTML=`<b>Stock: ${item.stock} ${esc(item.unit)}</b><br>Barcode: ${esc(item.barcode)}<br>Lokasi: ${esc(item.location)}`;stockQty.value=1;stockNote.value='';stockModal.classList.remove('hidden')}
-function closeStockModal(){stockModal.classList.add('hidden');selectedItem=null}
-async function submitStock(type){if(!selectedItem)return;const qty=+stockQty.value;if(!qty||qty<=0)return showToast('Qty harus lebih dari 0.');try{const r=await apiPost('stock',{barcode:selectedItem.barcode,type,qty,note:stockNote.value});closeStockModal();showToast(type==='IN'?'Stock masuk berhasil.':'Stock keluar berhasil.');await refreshDashboard();await loadItems()}catch(e){showError(e)}}
+let itemEditMode=false;
+
+function setSelectValue(el,value){const v=String(value||''); if(!v)return; if(!Array.from(el.options).some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)} el.value=v}
+function openAddItem(barcode=''){itemEditMode=false;selectedItem=null;itemModalTitle.textContent='＋ Tambah Barang';saveItemButton.textContent='💾 Simpan Barang';editInfo.classList.add('hidden');stockAdjustSection.classList.add('hidden');stockLabel.textContent='Stock Awal';fBarcode.value=barcode;fName.value='';fStock.value=0;fMinStock.value=1;fExpired.value='';fNote.value='';setSelectValue(fUnit,'pcs');if(master.categories.length)setSelectValue(fCategory,master.categories[0]);if(master.locations.length)setSelectValue(fLocation,master.locations[0]);itemModal.classList.remove('hidden')}
+function openEditItem(item){itemEditMode=true;selectedItem=item;itemModalTitle.textContent='✏️ Edit Barang';saveItemButton.textContent='💾 Simpan Perubahan';stockLabel.textContent='Stock';editInfo.innerHTML='<b>'+esc(item.name)+'</b><br>Barcode: '+esc(item.barcode);editInfo.classList.remove('hidden');fBarcode.value=item.barcode||'';fName.value=item.name||'';setSelectValue(fCategory,item.category);setSelectValue(fUnit,item.unit||'pcs');setSelectValue(fLocation,item.location);fStock.value=item.stock||0;fMinStock.value=item.minStock||0;fExpired.value=item.expiredDate||'';fNote.value=item.note||'';stockCurrent.textContent=(item.stock||0)+' '+(item.unit||'pcs');stockQty.value=1;stockNote.value='';stockAdjustSection.classList.remove('hidden');itemModal.classList.remove('hidden')}
+function closeItemModal(){itemModal.classList.add('hidden');selectedItem=null}
+async function saveItemForm(){const data={barcode:fBarcode.value,name:fName.value,category:fCategory.value,unit:fUnit.value,location:fLocation.value,stock:fStock.value,minStock:fMinStock.value,expiredDate:fExpired.value,note:fNote.value};if(!data.barcode.trim()||!data.name.trim())return showToast('Barcode dan nama wajib diisi.');try{if(itemEditMode){data.id=selectedItem.id;const r=await apiPost('updateitem',data);selectedItem=r.item;showToast('Perubahan barang berhasil disimpan.');await refreshDashboard();await loadItems();openEditItem(r.item)}else{const r=await apiPost('item',data);showToast('Barang berhasil disimpan.');await refreshDashboard();await loadItems();openEditItem(r.item)}}catch(e){showError(e)}}
+async function submitStock(type){if(!selectedItem)return;const qty=+stockQty.value;if(!qty||qty<=0)return showToast('Qty harus lebih dari 0.');try{const r=await apiPost('stock',{barcode:selectedItem.barcode,type,qty,note:stockNote.value});selectedItem=r.item;showToast(type==='IN'?'Stock masuk berhasil.':'Stock keluar berhasil.');await refreshDashboard();await loadItems();openEditItem(r.item)}catch(e){showError(e)}}
 
 async function loadItems(){hideSections();itemsSection.classList.remove('hidden');try{allItems=await apiGet('items');renderItems(allItems)}catch(e){showError(e)}}
 function filterItems(){const q=searchBox.value.toLowerCase();renderItems(allItems.filter(i=>[i.name,i.barcode,i.category,i.location].some(v=>String(v).toLowerCase().includes(q))))}
-function renderItems(items){itemsList.innerHTML=items.length?items.map(i=>{const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item" onclick='openStockModal(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
+function renderItems(items){itemsList.innerHTML=items.length?items.map(i=>{const low=+i.stock<=+i.minStock&&+i.minStock>0;return `<div class="item" onclick='openEditItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div><div class="name">${esc(i.name)}</div><div class="muted">${esc(i.category)} • ${esc(i.location)}</div><div class="muted">${esc(i.barcode)}</div></div><div class="${low?'low':'ok'} stock">${i.stock} ${esc(i.unit)}</div></div>`}).join(''):'<div class="empty">Tidak ditemukan.</div>'}
 async function showLowStock(){hideSections();itemsSection.classList.remove('hidden');const d=await apiGet('dashboard');allItems=d.lowStock;searchBox.value='';renderItems(allItems)}
 function showDashboard(){hideSections();dashboardSection.classList.remove('hidden');refreshDashboard()}
 async function showTransactions(){hideSections();transactionsSection.classList.remove('hidden');try{const rows=await apiGet('transactions',{limit:100});transactionsList.innerHTML=rows.length?rows.map(x=>`<div class="item"><div><div class="name">${esc(x.itemName)}</div><div class="muted">${esc(x.date)} • ${esc(x.location)}</div><div class="muted">${esc(x.barcode)}</div></div><div class="${x.type==='IN'?'ok':'low'} stock">${x.type==='IN'?'+':'-'}${x.qty}</div></div>`).join(''):'<div class="empty">Belum ada transaksi.</div>'}catch(e){showError(e)}}
